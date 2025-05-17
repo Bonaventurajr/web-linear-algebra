@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Linear Algebra Project</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: #121212;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  header {
+    background: #1f2937;
+    padding: 1rem 2rem;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #60a5fa;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  }
+  main {
+    flex-grow: 1;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: auto;
+    width: 95%;
+  }
+  h2 {
+    color: #60a5fa;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 0.25rem;
+    margin-bottom: 1rem;
+  }
+  section {
+    margin-bottom: 3rem;
+    background: #1e293b;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    box-shadow: inset 0 0 12px #2563eb33;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #93c5fd;
+  }
+  textarea, input[type="text"], input[type="number"], select {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    background-color: #334155;
+    color: #e0e7ff;
+    transition: background-color 0.3s ease;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: monospace;
+  }
+  textarea:focus, input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    background-color: #475569;
+  }
+  button {
+    background: #3b82f6;
+    padding: 0.7rem 1.5rem;
+    margin-top: 1rem;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px #3b82f6cc;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+  }
+  button:hover {
+    background: #2563eb;
+    box-shadow: 0 6px 20px #2563ebdd;
+  }
+  button:disabled {
+    background: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+  #equation-output, #vector-output {
+    margin-top: 1rem;
+    background: #0f172a;
+    padding: 1rem;
+    border-radius: 6px;
+    font-family: monospace;
+    min-height: 2rem;
+    white-space: pre-wrap;
+  }
+  .flex-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .flex-row > * {
+    flex: 1 1 120px;
+  }
+  #vector-visualization-container {
+    margin-top: 1rem;
+    width: 100%;
+    height: 350px;
+    background: #0f172a;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 0 15px #2563eb66;
+  }
+  #vector-canvas-2d {
+    width: 100%;
+    height: 350px;
+    display: none;
+  }
+  /* Responsive */
+  @media (max-width: 640px) {
+    main {
+      padding: 1rem;
+    }
+    header {
+      font-size: 1.4rem;
+    }
+    .flex-row {
+      flex-direction: column;
+    }
+    .flex-row > * {
+      flex: 1 1 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<header>Linear Algebra Project</header>
+<main>
+  <section id="systems-section">
+    <h2>System of Linear Equations Solver</h2>
+    <label for="equation-input">Enter system of equations</label>
+    <textarea id="equation-input" placeholder="2x + 3y = 6&#10;4x - y = 5"></textarea>
+    <div class="flex-row" style="margin-top: 1rem;">
+      <button id="btn-gauss">Solve with Gaussian Elimination</button>
+      <button id="btn-inverse">Solve with Matrix Inversion</button>
+      <button id="btn-leastsquares">Solve with Least Squares</button>
+    </div>
+    <pre id="equation-output" aria-live="polite"></pre>
+  </section>
+
+  <section id="vectors-section">
+    <h2>Vector Operations & Visualization</h2>
+    <label>
+      Dimension:
+      <select id="vector-dimension">
+        <option value="2">2D</option>
+        <option value="3" selected>3D</option>
+      </select>
+    </label>
+
+    <div class="flex-row">
+      <div>
+        <label for="vector-a-x">Vector A - X:</label>
+        <input id="vector-a-x" type="number" step="any" value="1" />
+      </div>
+      <div>
+        <label for="vector-a-y">Vector A - Y:</label>
+        <input id="vector-a-y" type="number" step="any" value="0" />
+      </div>
+      <div id="vector-a-z-container" style="display: block;">
+        <label for="vector-a-z">Vector A - Z:</label>
+        <input id="vector-a-z" type="number" step="any" value="0" />
+      </div>
+    </div>
+
+    <div class="flex-row" style="margin-top: 1rem;">
+      <div>
+        <label for="vector-b-x">Vector B - X:</label>
+        <input id="vector-b-x" type="number" step="any" value="0" />
+      </div>
+      <div>
+        <label for="vector-b-y">Vector B - Y:</label>
+        <input id="vector-b-y" type="number" step="any" value="1" />
+      </div>
+      <div id="vector-b-z-container" style="display: block;">
+        <label for="vector-b-z">Vector B - Z:</label>
+        <input id="vector-b-z" type="number" step="any" value="0" />
+      </div>
+    </div>
+
+    <label>
+      Operation:
+      <select id="vector-operation">
+        <option value="dot">Dot Product</option>
+        <option value="cross">Cross Product</option>
+        <option value="projection">Projection</option>
+        <option value="normalization">Normalization (Vector A)</option>
+      </select>
+    </label>
+
+    <button id="btn-vector-calc">Calculate & Visualize</button>
+
+    <pre id="vector-output" aria-live="polite"></pre>
+
+    <div id="vector-visualization-container">
+      <canvas id="vector-canvas-2d"></canvas>
+      <div id="vector-3d-viewer" style="width: 100%; height: 100%; display:none;"></div>
+    </div>
+
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+
+<script>
+(() => {
+  // Util: parse equations from input string to matrix form Ax = b
+  function parseEquations(input) {
+    // Support variables x,y,z only
+    const lines = input.trim().split(/[\r\n]+/);
+    const variables = ['x', 'y', 'z'];
+    let varIndices = {}; // map variable to column index (to support systems like only x,y or x,y,z)
+    // find all variables used in all lines in order
+    let varsUsed = new Set();
+    lines.forEach(line => {
+      variables.forEach(v => {
+        if (new RegExp(`[\\d\\.\\-\\+\\s]*${v}`).test(line.replace(/\s+/g,''))) {
+          varsUsed.add(v);
+        }
+      });
+    });
+    if (varsUsed.size===0) return null; // no variables found
+    let orderedVars = variables.filter(v => varsUsed.has(v));
+    orderedVars.forEach((v,i)=>varIndices[v]=i);
+
+    const A = [];
+    const b = [];
+
+    // Parse each line (equation)
+    for (let line of lines) {
+      // remove spaces
+      line = line.replace(/\s+/g,'');
+      if (line==='') continue;
+      // split at =
+      let [left, right] = line.split('=');
+      if (right === undefined) return null;
+      // rhs constant
+      let rhs = parseFloat(right);
+      if (isNaN(rhs)) return null;
+      // initialize coeffs
+      let coeffs = Array(orderedVars.length).fill(0);
+
+      // Parse left side coefficients
+      // regex to match coefficient for each var: e.g. -1.2x or +x or 3y or -z or x
+      const regex = /([+\-]?[\d\.]*)([xyz])/g;
+      let match;
+      let matchedVars = new Set();
+      while((match=regex.exec(left))!==null) {
+        let coefStr = match[1];
+        let varName = match[2];
+        matchedVars.add(varName);
+        let coef;
+        if(coefStr==='' || coefStr==='+' ) coef = 1;
+        else if(coefStr==='-') coef = -1;
+        else coef = Number(coefStr);
+        if (isNaN(coef)) return null;
+        coeffs[varIndices[varName]] += coef;
+      }
+      // check if there are constants on LHS without vars (like 3 + 2x ...)
+      // remove all var terms + their coeff from left to see if constant remains
+      let leftNoVars = left.replace(regex, '');
+      // If anything left in leftNoVars (like 3+ or -4+), sum constants
+      try {
+        // tokenize the leftNoVars string for constants using + - operators preserving signs
+        // e.g. "3+2" => 3 and 2; "-3-1.5" => -3 and -1.5
+        let constSum = 0;
+        let tokens = leftNoVars.match(/[+\-]?[\d\.]+/g);
+        if (tokens) {
+          for(let t of tokens) {
+            constSum += parseFloat(t);
+          }
+        }
+        // move the constant sum to right side by subtracting from rhs
+        rhs -= constSum;
+      } catch(e) {
+        // ignore parse errors here
+      }
+      
+      A.push(coeffs);
+      b.push(rhs);
+    }
+    return {A, b, variables: orderedVars};
+  }
+
+  // Matrix utilities
+  function cloneMatrix(m) {
+    return m.map(row => row.slice());
+  }
+
+  function identityMatrix(n) {
+    let I = [];
+    for(let i=0; i<n; i++){
+      I[i] = [];
+      for(let j=0; j<n; j++){
+        I[i][j] = (i===j)?1:0;
+      }
+    }
+    return I;
+  }
+
+  // Gaussian elimination to solve Ax=b
+  function gaussianElimination(A, b) {
+    let m = A.length;
+    let n = A[0].length;
+    let M = cloneMatrix(A);
+    let B = b.slice();
+
+    for(let k=0; k<n; k++) {
+      // find pivot row
+      let maxRow = k;
+      for(let i=k+1; i<m; i++) {
+        if(Math.abs(M[i][k]) > Math.abs(M[maxRow][k])) maxRow = i;
+      }
+      if(Math.abs(M[maxRow][k]) < 1e-14) continue; // pivot too small, skip
+
+      // swap rows k and maxRow
+      [M[k], M[maxRow]] = [M[maxRow], M[k]];
+      [B[k], B[maxRow]] = [B[maxRow], B[k]];
+
+      // elimination
+      for(let i=k+1; i<m; i++) {
+        let c = M[i][k]/M[k][k];
+        for(let j=k; j<n; j++) {
+          M[i][j] -= c*M[k][j];
+        }
+        B[i] -= c*B[k];
+      }
+    }
+
+    // Back substitution
+    let x = Array(n).fill(0);
+    let freeVariable = false;
+    for(let i=n-1; i>=0; i--) {
+      let s = B[i];
+      for(let j=i+1; j<n; j++) {
+        s -= M[i][j]*x[j];
+      }
+      if (Math.abs(M[i][i]) < 1e-14) {
+        if (Math.abs(s) > 1e-14) return null; // no solution
+        freeVariable = true; // infinite solutions
+        continue;
+      }
+      x[i] = s/M[i][i];
+    }
+    if (freeVariable) return null; // treat as no unique solution for now
+    return x;
+  }
+
+  // Matrix inversion for square matrix only
+  function invertMatrix(M) {
+    let n = M.length;
+    // check if square
+    if (!M.every(row => row.length === n)) return null;
+    let I = identityMatrix(n);
+    let A = cloneMatrix(M);
+
+    for (let i=0; i<n; i++) {
+      let pivot = A[i][i];
+      if (Math.abs(pivot) < 1e-14) {
+        // find row below to swap with
+        let swapRow = -1;
+        for (let r=i+1; r<n; r++) {
+          if (Math.abs(A[r][i]) > 1e-14) {
+            swapRow = r;
+            break;
+          }
+        }
+        if (swapRow === -1) return null; // singular matrix
+        [A[i], A[swapRow]] = [A[swapRow], A[i]];
+        [I[i], I[swapRow]] = [I[swapRow], I[i]];
+        pivot = A[i][i];
+      }
+      // Scale row i
+      for (let j=0; j<n; j++) {
+        A[i][j] /= pivot;
+        I[i][j] /= pivot;
+      }
+      // Eliminate other rows
+      for (let r=0; r<n; r++) {
+        if (r !== i) {
+          let f = A[r][i];
+          for (let c=0; c<n; c++) {
+            A[r][c] -= f * A[i][c];
+            I[r][c] -= f * I[i][c];
+          }
+        }
+      }
+    }
+    return I;
+  }
+
+  // Multiply matrix m by vector v
+  function multiplyMatrixVector(M, v) {
+    return M.map(row => row.reduce((acc, val, idx) => acc + val * v[idx], 0));
+  }
+
+  // Least squares solve: x = (A^T A)^-1 A^T b
+  function leastSquaresSolve(A, b) {
+    let m = A.length;
+    let n = A[0].length;
+    // Build A^T
+    let AT = [];
+    for (let i=0; i<n; i++) {
+      AT[i] = [];
+      for (let j=0; j<m; j++) {
+        AT[i][j] = A[j][i];
+      }
+    }
+    // Compute AT * A
+    let ATA = [];
+    for (let i=0; i<n; i++) {
+      ATA[i] = [];
+      for (let j=0; j<n; j++) {
+        let s=0;
+        for(let k=0; k<m; k++) s += AT[i][k]*A[k][j];
+        ATA[i][j] = s;
+      }
+    }
+    // Compute AT * b
+    let ATb = [];
+    for (let i=0; i<n; i++) {
+      let s=0;
+      for (let k=0; k<m; k++) s += AT[i][k]*b[k];
+      ATb[i] = s;
+    }
+    // Invert ATA
+    let invATA = invertMatrix(ATA);
+    if (!invATA) return null; // no solution
+    // Compute x = invATA * ATb
+    let x = multiplyMatrixVector(invATA, ATb);
+    return x;
+  }
+
+  // Vector operations utilities
+  function dotProduct(v1, v2) {
+    let n = Math.min(v1.length, v2.length);
+    let sum = 0;
+    for(let i=0; i<n; i++) {
+      sum += v1[i]*v2[i];
+    }
+    return sum;
+  }
+  function crossProduct(v1, v2) {
+    if (v1.length < 3 || v2.length <3) return null;
+    return [
+      v1[1]*v2[2] - v1[2]*v2[1],
+      v1[2]*v2[0] - v1[0]*v2[2],
+      v1[0]*v2[1] - v1[1]*v2[0],
+    ];
+  }
+  function vectorLength(v) {
+    return Math.sqrt(v.reduce((acc,x) => acc + x*x, 0));
+  }
+  function normalizeVector(v) {
+    let len = vectorLength(v);
+    if (len === 0) return null;
+    return v.map(x => x/len);
+  }
+  function projection(v1, v2) {
+    // Projection of v1 onto v2: (dot(v1,v2)/|v2|^2) * v2
+    let len2 = dotProduct(v2,v2);
+    if(len2===0) return null;
+    let coef = dotProduct(v1,v2)/len2;
+    return v2.map(x => x*coef);
+  }
+
+  // DOM elements for equations
+  const eqInput = document.getElementById('equation-input');
+  const btnGauss = document.getElementById('btn-gauss');
+  const btnInverse = document.getElementById('btn-inverse');
+  const btnLeastSquares = document.getElementById('btn-leastsquares');
+  const eqOutput = document.getElementById('equation-output');
+
+  function formatSolution(variables, solution) {
+    if (!solution) return "No unique solution.";
+    return variables.map((v,i) => `${v} = ${solution[i].toFixed(5)}`).join('\n');
+  }
+
+  btnGauss.addEventListener('click', () => {
+    const parsed = parseEquations(eqInput.value);
+    if (!parsed) {
+      eqOutput.textContent = "Invalid input equations.";
+      return;
+    }
+    const {A,b,variables} = parsed;
+    const solution = gaussianElimination(A,b);
+    eqOutput.textContent = formatSolution(variables, solution);
+  });
+
+  btnInverse.addEventListener('click', () => {
+    const parsed = parseEquations(eqInput.value);
+    if (!parsed) {
+      eqOutput.textContent = "Invalid input equations.";
+      return;
+    }
+    const {A,b,variables} = parsed;
+    if (A.length !== A[0].length) {
+      eqOutput.textContent = "Matrix inversion requires a square coefficient matrix.";
+      return;
+    }
+    const invA = invertMatrix(A);
+    if (!invA) {
+      eqOutput.textContent = "Matrix is singular or unable to invert.";
+      return;
+    }
+    const solution = multiplyMatrixVector(invA, b);
+    eqOutput.textContent = formatSolution(variables, solution);
+  });
+
+  btnLeastSquares.addEventListener('click', () => {
+    const parsed = parseEquations(eqInput.value);
+    if (!parsed) {
+      eqOutput.textContent = "Invalid input equations.";
+      return;
+    }
+    const {A,b,variables} = parsed;
+    const solution = leastSquaresSolve(A,b);
+    eqOutput.textContent = formatSolution(variables, solution);
+  });
+
+  // Vector section elements
+  const vectorDimensionSelect = document.getElementById('vector-dimension');
+  const vectorAInputs = {
+    x: document.getElementById('vector-a-x'),
+    y: document.getElementById('vector-a-y'),
+    z: document.getElementById('vector-a-z'),
+  };
+  const vectorBInputs = {
+    x: document.getElementById('vector-b-x'),
+    y: document.getElementById('vector-b-y'),
+    z: document.getElementById('vector-b-z'),
+  };
+  const vectorAContainerZ = document.getElementById('vector-a-z-container');
+  const vectorBContainerZ = document.getElementById('vector-b-z-container');
+  const vectorOperationSelect = document.getElementById('vector-operation');
+  const btnVectorCalc = document.getElementById('btn-vector-calc');
+  const vectorOutput = document.getElementById('vector-output');
+
+  // Visualization containers
+  const vectorCanvas2d = document.getElementById('vector-canvas-2d');
+  const vector3dViewer = document.getElementById('vector-3d-viewer');
+
+  // Handle dimension change: show/hide Z inputs
+  vectorDimensionSelect.addEventListener('change', () => {
+    if (vectorDimensionSelect.value === "2") {
+      vectorAContainerZ.style.display = 'none';
+      vectorBContainerZ.style.display = 'none';
+      vectorCanvas2d.style.display = 'block';
+      vector3dViewer.style.display = 'none';
+    } else {
+      vectorAContainerZ.style.display = 'block';
+      vectorBContainerZ.style.display = 'block';
+      vectorCanvas2d.style.display = 'none';
+      vector3dViewer.style.display = 'block';
+    }
+  });
+
+  // Initialization to show 3D viewer by default
+  if (vectorDimensionSelect.value === "3") {
+    vectorAContainerZ.style.display = 'block';
+    vectorBContainerZ.style.display = 'block';
+    vectorCanvas2d.style.display = 'none';
+    vector3dViewer.style.display = 'block';
+  } else {
+    vectorAContainerZ.style.display = 'none';
+    vectorBContainerZ.style.display = 'none';
+    vectorCanvas2d.style.display = 'block';
+    vector3dViewer.style.display = 'none';
+  }
+
+  // Three.js 3D vector visualization setup
+  let scene, camera, renderer, axesHelper;
+  let vectorALine, vectorBLine, projectionLine;
+
+  function setup3D() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f172a);
+
+    // Camera
+    const width = vector3dViewer.clientWidth;
+    const height = vector3dViewer.clientHeight;
+    camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    camera.position.set(5, 5, 5);
+    camera.lookAt(scene.position);
+
+    // Renderer
+    renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize(width, height);
+    vector3dViewer.innerHTML = '';
+    vector3dViewer.appendChild(renderer.domElement);
+
+    // Axes helper
+    axesHelper = new THREE.AxesHelper(3);
+    scene.add(axesHelper);
+
+    // Light
+    const light = new THREE.DirectionalLight(0xffffff, 0.8);
+    light.position.set(5,10,7);
+    scene.add(light);
+
+    animate();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+
+  function clear3DVectors() {
+    if (vectorALine) {
+      scene.remove(vectorALine);
+      vectorALine.geometry.dispose();
+      vectorALine.material.dispose();
+      vectorALine = null;
+    }
+    if (vectorBLine) {
+      scene.remove(vectorBLine);
+      vectorBLine.geometry.dispose();
+      vectorBLine.material.dispose();
+      vectorBLine = null;
+    }
+    if (projectionLine) {
+      scene.remove(projectionLine);
+      projectionLine.geometry.dispose();
+      projectionLine.material.dispose();
+      projectionLine = null;
+    }
+  }
+
+  function drawVector3D(vec, color=0x3b82f6) {
+    const material = new THREE.LineBasicMaterial({color: color, linewidth: 4});
+    const points = [];
+    points.push(new THREE.Vector3(0, 0, 0));
+    points.push(new THREE.Vector3(...vec));
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const line = new THREE.Line(geometry, material);
+    scene.add(line);
+    return line;
+  }
+
+  // 2D Canvas vector visualization
+  const ctx2d = vectorCanvas2d.getContext('2d');
+  function clear2D() {
+    ctx2d.clearRect(0,0, vectorCanvas2d.width, vectorCanvas2d.height);
+  }
+  function resizeCanvas2D() {
+    vectorCanvas2d.width = vectorCanvas2d.clientWidth;
+    vectorCanvas2d.height = vectorCanvas2d.clientHeight;
+  }
+  window.addEventListener('resize', () => {
+    resizeCanvas2D();
+    drawVectors2D(currentVectors, currentProjection);
+  });
+
+  resizeCanvas2D();
+
+  let currentVectors = null;
+  let currentProjection = null;
+
+  function drawVectors2D(vectors, projection=null) {
+    clear2D();
+    if (!vectors) return;
+    const width = vectorCanvas2d.width;
+    const height = vectorCanvas2d.height;
+    const cx = width/2;
+    const cy = height/2;
+    const scale = Math.min(width, height)/6;
+
+    // Draw axes
+    ctx2d.strokeStyle = '#64748b';
+    ctx2d.lineWidth = 2;
+    ctx2d.beginPath();
+    ctx2d.moveTo(0, cy);
+    ctx2d.lineTo(width, cy);
+    ctx2d.moveTo(cx, 0);
+    ctx2d.lineTo(cx, height);
+    ctx2d.stroke();
+
+    // Draw vector A (blue)
+    ctx2d.strokeStyle = '#3b82f6';
+    ctx2d.lineWidth = 4;
+    ctx2d.beginPath();
+    ctx2d.moveTo(cx, cy);
+    ctx2d.lineTo(cx + vectors[0][0]*scale, cy - vectors[0][1]*scale);
+    ctx2d.stroke();
+
+    // Draw vector B (orange)
+    ctx2d.strokeStyle = '#f97316';
+    ctx2d.lineWidth = 4;
+    ctx2d.beginPath();
+    ctx2d.moveTo(cx, cy);
+    ctx2d.lineTo(cx + vectors[1][0]*scale, cy - vectors[1][1]*scale);
+    ctx2d.stroke();
+
+    // If projection present, draw it as dotted green line
+    if(projection) {
+      ctx2d.strokeStyle = '#22c55e';
+      ctx2d.setLineDash([5, 5]);
+      ctx2d.beginPath();
+      ctx2d.moveTo(cx, cy);
+      ctx2d.lineTo(cx + projection[0]*scale, cy - projection[1]*scale);
+      ctx2d.stroke();
+      ctx2d.setLineDash([]);
+    }
+  }
+
+  // Vector operation handler + visualization
+  btnVectorCalc.addEventListener('click', () => {
+    const dim = vectorDimensionSelect.value === '2' ? 2 : 3;
+    let A = [];
+    let B = [];
+    try {
+      A.push(parseFloat(vectorAInputs.x.value));
+      A.push(parseFloat(vectorAInputs.y.value));
+      if(dim===3) A.push(parseFloat(vectorAInputs.z.value));
+      B.push(parseFloat(vectorBInputs.x.value));
+      B.push(parseFloat(vectorBInputs.y.value));
+      if(dim===3) B.push(parseFloat(vectorBInputs.z.value));
+    } catch(e) {
+      vectorOutput.textContent = "Invalid vector inputs.";
+      return;
+    }
+    if (A.some(isNaN) || B.some(isNaN)) {
+      vectorOutput.textContent = "Vector inputs must be numbers.";
+      return;
+    }
+
+    const op = vectorOperationSelect.value;
+    let output = "";
+    clear3DVectors();
+    currentVectors = null;
+    currentProjection = null;
+
+    if (dim === 2) {
+      vector3dViewer.style.display = 'none';
+      vectorCanvas2d.style.display = 'block';
+    } else {
+      vector3dViewer.style.display = 'block';
+      vectorCanvas2d.style.display = 'none';
+    }
+
+    if (op === "dot") {
+      output = `Dot product = ${dotProduct(A,B).toFixed(5)}`;
+      currentVectors = [A,B];
+    } else if (op === "cross") {
+      if(dim < 3) {
+        output = "Cross product needs 3D vectors.";
+      } else {
+        let c = crossProduct(A,B);
+        output = `Cross product = (${c.map(x=>x.toFixed(5)).join(', ')})`;
+        currentVectors = [A,B];
+      }
+    } else if (op === "projection") {
+      let proj = projection(A,B);
+      if (!proj) {
+        output = "Cannot project onto zero vector.";
+      } else {
+        output = `Projection of A onto B = (${proj.map(x => x.toFixed(5)).join(', ')})`;
+        currentVectors = [A,B];
+        currentProjection = proj;
+      }
+    } else if (op === "normalization") {
+      let norm = normalizeVector(A);
+      if (!norm) {
+        output = "Cannot normalize zero vector.";
+      } else {
+        output = `Normalization of A = (${norm.map(x => x.toFixed(5)).join(', ')})`;
+        currentVectors = [A];
+      }
+    }
+
+    vectorOutput.textContent = output;
+    // Draw vectors
+    if(dim === 3) {
+      // 3D draw
+      if (!scene) setup3D();
+      clear3DVectors();
+      if (currentVectors && currentVectors.length > 0) {
+        vectorALine = drawVector3D(currentVectors[0], 0x3b82f6); // blue
+      }
+      if (currentVectors && currentVectors.length > 1) {
+        vectorBLine = drawVector3D(currentVectors[1], 0xf97316); // orange
+      }
+      if (currentProjection) {
+        projectionLine = drawVector3D(currentProjection, 0x22c55e); // green
+      }
+    } else if (dim === 2) {
+      drawVectors2D(currentVectors, currentProjection);
+    }
+  });
+
+})();
+</script>
+
+</body>
+</html>
+
